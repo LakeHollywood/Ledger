@@ -1,0 +1,39 @@
+name: STS Assurance & Ledger Validation
+
+on:
+  push:
+    branches: [ "main", "master", "dev/**" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  validate-ledger:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Generate Audit Manifest
+        run: |
+          mkdir -p /workspace/data
+          echo "{\"timestamp\": \"$(date -u +'%Y-%m-%dT%H:%M:%SZ')\", \"actor\": \"parkkris111-sovereign\", \"integration\": \"GitHub Actions CI\", \"status\": \"VERIFIED\"}" > /workspace/data/audit_manifest.json
+
+      - name: Execute Cryptographic & Pipeline Test Suite
+        env:
+          STS_DB_PATH: /workspace/data/sts_ledger.db
+          STS_OUTPUT_DIR: /workspace/data/reports
+        run: |
+          python3 -m pytest tests/ -v --tb=short
