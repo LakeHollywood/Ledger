@@ -1,0 +1,18 @@
+.PHONY: build validate clean audit-stamp
+
+audit-stamp:
+	@echo "=========================================="
+	@echo "Generating STS Telemetry Audit Header..."
+	@echo "=========================================="
+	@mkdir -p /workspace/data
+	@echo "{\"timestamp\": \"$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')\", \"actor\": \"parkkris111-sovereign\", \"integration\": \"Copilot SWE Agent\", \"status\": \"ACTIVE\"}" > /workspace/data/audit_manifest.json
+
+build: audit-stamp
+	docker-compose build
+
+validate: audit-stamp
+	docker-compose up --abort-on-container-exit
+
+clean:
+	docker-compose down -v
+	rm -rf data/
